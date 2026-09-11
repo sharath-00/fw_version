@@ -43,5 +43,7 @@ jobs:
           RECIPIENT_EMAILS: ${{ secrets.RECIPIENT_EMAILS || '71762332038@cit.edu.in' }}
           BCC_EMAILS: ${{ secrets.BCC_EMAILS || '' }}
           EMAIL_SUBJECT_PREFIX: ${{ secrets.EMAIL_SUBJECT_PREFIX || '[BBMP Panels - Firmware Version Status Report]' }}
+          ENABLE_EMAIL_THREADING: ${{ secrets.ENABLE_EMAIL_THREADING || 'true' }}
+          EMAIL_THREAD_ID: ${{ secrets.EMAIL_THREAD_ID || 'bbmp-panels-firmware-version-report-thread@schnellenergy.com' }}
         run: |
           python main.py --send-now

@@ -1,6 +1,9 @@
 import smtplib
 import os
+import json
+import uuid
 import logging
+from pathlib import Path
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 from datetime import datetime, timezone, timedelta
@@ -8,6 +11,11 @@ from config import Config
 
 logger = logging.getLogger("BBMP_FW_Report.MailSender")
 IST = timezone(timedelta(hours=5, minutes=30))
+STATE_FILE_PATH = Path(__file__).resolve().parent / ".email_thread_state.json"
+
+def _format_msg_id(msg_id: str) -> str:
+    cleaned = msg_id.strip("<>").strip()
+    return f"<{cleaned}>"
 
 class MailSender:
     def __init__(self):
@@ -19,6 +27,44 @@ class MailSender:
         self.sender = Config.SENDER_EMAIL
         self.recipients = Config.RECIPIENT_EMAILS
         self.bcc = Config.BCC_EMAILS
+        self.enable_threading = Config.ENABLE_EMAIL_THREADING
+        self.thread_id = Config.EMAIL_THREAD_ID
+
+    def _get_thread_headers(self, thread_id: str):
+        formatted_thread_id = _format_msg_id(thread_id)
+        if STATE_FILE_PATH.exists():
+            try:
+                with open(STATE_FILE_PATH, "r", encoding="utf-8") as f:
+                    data = json.load(f)
+                    t_data = data.get(thread_id, {})
+                    if not t_data and "root_msg_id" in data:
+                        t_data = data
+                    root_id = t_data.get("root_msg_id") or formatted_thread_id
+                    last_id = t_data.get("last_msg_id") or formatted_thread_id
+                    return _format_msg_id(root_id), _format_msg_id(last_id)
+            except Exception as e:
+                logger.warning(f"Could not read thread state: {e}")
+        return formatted_thread_id, formatted_thread_id
+
+    def _save_thread_state(self, thread_id: str, root_msg_id: str, sent_msg_id: str):
+        try:
+            data = {}
+            if STATE_FILE_PATH.exists():
+                try:
+                    with open(STATE_FILE_PATH, "r", encoding="utf-8") as f:
+                        data = json.load(f)
+                except Exception:
+                    data = {}
+            data[thread_id] = {
+                "root_msg_id": root_msg_id,
+                "last_msg_id": sent_msg_id,
+                "updated_at": datetime.now(IST).strftime("%Y-%m-%d %H:%M:%S IST")
+            }
+            with open(STATE_FILE_PATH, "w", encoding="utf-8") as f:
+                json.dump(data, f, indent=2)
+            logger.info(f"Updated thread state with last_msg_id={sent_msg_id}")
+        except Exception as e:
+            logger.warning(f"Could not save thread state: {e}")
 
     def send_email(self, html_content_path, subject=None):
         if not self.recipients:
@@ -32,14 +78,31 @@ class MailSender:
         with open(html_content_path, "r", encoding="utf-8") as f:
             html_body = f.read()
 
-        now_str = datetime.now(IST).strftime("%d-%b-%Y")
-        mail_subject = subject or f"{Config.EMAIL_SUBJECT_PREFIX} - {now_str}"
+        # Subject Line: Keep constant subject prefix for 100% email client thread matching
+        mail_subject = subject or Config.EMAIL_SUBJECT_PREFIX
+
+        domain = "schnellenergy.com"
+        if self.sender and "@" in self.sender:
+            domain = self.sender.split("@")[-1].strip()
+        current_msg_id = f"<{int(datetime.now().timestamp())}.{uuid.uuid4().hex[:8]}@{domain}>"
 
         msg = MIMEMultipart("alternative")
         msg["Subject"] = mail_subject
         msg["From"] = f"BBMP Panel Monitor <{self.sender}>"
         msg["To"] = ", ".join(self.recipients)
-        msg["Message-ID"] = f"<bbmp-fw-report-{int(datetime.now().timestamp())}@schnellenergy.com>"
+        msg["Message-ID"] = current_msg_id
+
+        # In-Reply-To & References for RFC 5322 Email Threading
+        root_msg_id = None
+        if self.enable_threading:
+            root_msg_id, parent_msg_id = self._get_thread_headers(self.thread_id)
+            msg["In-Reply-To"] = parent_msg_id
+            if root_msg_id != parent_msg_id:
+                msg["References"] = f"{root_msg_id} {parent_msg_id}"
+            else:
+                msg["References"] = root_msg_id
+            msg["Thread-Topic"] = mail_subject.replace("[", "").replace("]", "").strip()
+            logger.info(f"Email Threading Active | In-Reply-To: {parent_msg_id} | References: {msg['References']}")
 
         # Attach text & HTML versions
         msg.attach(MIMEText("Please view this email in an HTML-compatible email client.", "plain"))
@@ -55,6 +118,11 @@ class MailSender:
                 server.login(self.username, self.password)
                 server.sendmail(self.sender, all_destinations, msg.as_string())
                 logger.info(f"Email successfully sent to {len(self.recipients)} recipients (+ {len(self.bcc)} BCC)")
+                
+                # Persist thread state
+                if self.enable_threading and root_msg_id:
+                    self._save_thread_state(self.thread_id, root_msg_id, current_msg_id)
+                    
                 return True
         except Exception as e:
             logger.error(f"Failed to send email: {e}")

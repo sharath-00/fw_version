@@ -41,4 +41,7 @@ class Config:
     _bcc_str = os.getenv("BCC_EMAILS", "")
     BCC_EMAILS = [r.strip() for r in _bcc_str.split(",") if r.strip()]
 
+    # Subject & Email Threading Configuration
     EMAIL_SUBJECT_PREFIX = os.getenv("EMAIL_SUBJECT_PREFIX", "[BBMP Panels - Firmware Version Status Report]").strip()
+    ENABLE_EMAIL_THREADING = os.getenv("ENABLE_EMAIL_THREADING", "true").lower() in ("true", "1", "yes")
+    EMAIL_THREAD_ID = os.getenv("EMAIL_THREAD_ID", "bbmp-panels-firmware-version-report-thread@schnellenergy.com").strip()
