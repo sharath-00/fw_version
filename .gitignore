@@ -1,0 +1,19 @@
+# Environment configuration (Contains sensitive credentials)
+.env
+
+# Python Bytecode and cache
+__pycache__/
+*.py[cod]
+*$py.class
+*.pyc
+
+# Local Data Cache & Temporary Output Files
+latest_fw_data.json
+*.xlsx
+*.log
+
+# IDE & OS files
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
