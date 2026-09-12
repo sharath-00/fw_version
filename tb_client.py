@@ -164,21 +164,35 @@ class ThingsBoardClient:
         except Exception as e:
             pass
 
-        # Determine online / offline status based on systime (4 hour threshold as per BBMP standard)
+        # Real ThingsBoard communication status:
+        # - OFFLINE (PF): Power failure packet (pkt == 8)
+        # - ONLINE: Communicated within 4 hours (pkt != 8)
+        # - OFFLINE (Real): No communication for > 4 hours (excluding PF)
         now_ts = int(time.time())
         is_online = False
-        last_comm_dt = None
+        is_offline_pf = False
 
-        if systime > 0:
-            last_comm_dt = datetime.fromtimestamp(systime, tz=timezone.utc).astimezone(IST).strftime("%Y-%m-%d %H:%M:%S")
+        pkt_int = 0
+        try:
+            if pkt is not None:
+                pkt_int = int(pkt)
+        except (ValueError, TypeError):
+            pkt_int = 0
+
+        if pkt_int == 8:
+            is_offline_pf = True
+        elif systime > 0:
             if (now_ts - systime) < 14400:  # 4 hours
                 is_online = True
         elif last_activity_ts > 0:
-            last_comm_dt = datetime.fromtimestamp(last_activity_ts / 1000.0, tz=timezone.utc).astimezone(IST).strftime("%Y-%m-%d %H:%M:%S")
             if (now_ts - (last_activity_ts / 1000.0)) < 14400:
                 is_online = True
-        elif active is True:
-            is_online = True
+
+        last_comm_dt = None
+        if systime > 0:
+            last_comm_dt = datetime.fromtimestamp(systime, tz=timezone.utc).astimezone(IST).strftime("%Y-%m-%d %H:%M:%S")
+        elif last_activity_ts > 0:
+            last_comm_dt = datetime.fromtimestamp(last_activity_ts / 1000.0, tz=timezone.utc).astimezone(IST).strftime("%Y-%m-%d %H:%M:%S")
 
         # Clean region/zone naming
         clean_region = region
@@ -205,6 +219,8 @@ class ThingsBoardClient:
             "ward": ward,
             "active": active,
             "is_online": is_online,
+            "is_offline_pf": is_offline_pf,
+            "pkt": pkt,
             "systime": systime,
             "last_comm_time": last_comm_dt or "Never",
             "imei": imei,

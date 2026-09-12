@@ -22,24 +22,27 @@ class FirmwareAnalyzer:
         
         # 1. Classify each panel into focused versions or "Other Versions"
         version_stats = {
-            v: {"count": 0, "online": 0, "offline": 0} for v in self.focused_versions
+            v: {"count": 0, "online": 0, "offline": 0, "offline_pf": 0} for v in self.focused_versions
         }
-        version_stats["Other Versions"] = {"count": 0, "online": 0, "offline": 0, "breakdown": Counter()}
+        version_stats["Other Versions"] = {"count": 0, "online": 0, "offline": 0, "offline_pf": 0, "breakdown": Counter()}
 
         online_total = 0
         offline_total = 0
+        offline_pf_total = 0
 
         # Region & Zone Breakdown
         regions = defaultdict(lambda: {
             "total": 0,
             "online": 0,
             "offline": 0,
+            "offline_pf": 0,
             "versions": {v: 0 for v in self.focused_versions},
             "other_count": 0,
             "zones": defaultdict(lambda: {
                 "total": 0,
                 "online": 0,
                 "offline": 0,
+                "offline_pf": 0,
                 "versions": {v: 0 for v in self.focused_versions},
                 "other_count": 0
             })
@@ -48,10 +51,13 @@ class FirmwareAnalyzer:
         for p in self.panels:
             raw_fw = p.get("fw_version", "Unknown")
             is_on = p.get("is_online", False)
+            is_pf = p.get("is_offline_pf", False)
             reg = p.get("region") or "Unknown"
             zone = p.get("zone") or "Unknown"
 
-            if is_on:
+            if is_pf:
+                offline_pf_total += 1
+            elif is_on:
                 online_total += 1
             else:
                 offline_total += 1
@@ -65,21 +71,27 @@ class FirmwareAnalyzer:
 
             if matched_v:
                 version_stats[matched_v]["count"] += 1
-                if is_on:
+                if is_pf:
+                    version_stats[matched_v]["offline_pf"] += 1
+                elif is_on:
                     version_stats[matched_v]["online"] += 1
                 else:
                     version_stats[matched_v]["offline"] += 1
             else:
                 version_stats["Other Versions"]["count"] += 1
                 version_stats["Other Versions"]["breakdown"][raw_fw] += 1
-                if is_on:
+                if is_pf:
+                    version_stats["Other Versions"]["offline_pf"] += 1
+                elif is_on:
                     version_stats["Other Versions"]["online"] += 1
                 else:
                     version_stats["Other Versions"]["offline"] += 1
 
             # Regional Aggregation
             regions[reg]["total"] += 1
-            if is_on:
+            if is_pf:
+                regions[reg]["offline_pf"] += 1
+            elif is_on:
                 regions[reg]["online"] += 1
             else:
                 regions[reg]["offline"] += 1
@@ -91,7 +103,9 @@ class FirmwareAnalyzer:
 
             # Zone Aggregation
             regions[reg]["zones"][zone]["total"] += 1
-            if is_on:
+            if is_pf:
+                regions[reg]["zones"][zone]["offline_pf"] += 1
+            elif is_on:
                 regions[reg]["zones"][zone]["online"] += 1
             else:
                 regions[reg]["zones"][zone]["offline"] += 1
@@ -107,6 +121,7 @@ class FirmwareAnalyzer:
             c = version_stats[v]["count"]
             on_c = version_stats[v]["online"]
             off_c = version_stats[v]["offline"]
+            pf_c = version_stats[v]["offline_pf"]
             pct = (c / total_panels * 100) if total_panels else 0
             on_pct = (on_c / c * 100) if c else 0
             summary_rows.append({
@@ -115,6 +130,7 @@ class FirmwareAnalyzer:
                 "percentage": pct,
                 "online": on_c,
                 "offline": off_c,
+                "offline_pf": pf_c,
                 "online_pct": on_pct,
                 "is_main": (v == "SL530.54")
             })
@@ -130,6 +146,7 @@ class FirmwareAnalyzer:
                 "percentage": pct,
                 "online": oth["online"],
                 "offline": oth["offline"],
+                "offline_pf": oth["offline_pf"],
                 "online_pct": on_pct,
                 "is_main": False,
                 "note": ", ".join([f"{k}:{v}" for k, v in oth["breakdown"].items()])
@@ -143,6 +160,7 @@ class FirmwareAnalyzer:
             "total_panels": total_panels,
             "online_total": online_total,
             "offline_total": offline_total,
+            "offline_pf_total": offline_pf_total,
             "online_pct": (online_total / total_panels * 100) if total_panels else 0,
             "focused_versions": self.focused_versions,
             "summary_rows": summary_rows,

@@ -20,15 +20,16 @@ def print_terminal_summary(analysis):
     print("="*80)
     print(f" Timestamp           : {analysis['timestamp']}")
     print(f" Total Panels Scanned: {analysis['total_panels']:,}")
-    print(f" Online Panels (4h)  : {analysis['online_total']:,} ({analysis['online_pct']:.1f}%)")
-    print(f" Offline Panels      : {analysis['offline_total']:,} ({100 - analysis['online_pct']:.1f}%)")
+    print(f" ONLINE Panels (<= 4h): {analysis['online_total']:,} ({analysis['online_pct']:.1f}%)")
+    print(f" OFFLINE Panels (Real): {analysis['offline_total']:,} ({(analysis['offline_total']/analysis['total_panels']*100):.1f}%)")
+    print(f" OFFLINE Panels (PF)  : {analysis.get('offline_pf_total', 0):,} ({(analysis.get('offline_pf_total', 0)/analysis['total_panels']*100):.1f}%)")
     print("-"*80)
     
     print("\n[+] FIRMWARE VERSIONS BREAKDOWN (.55 -> .54 -> .47):")
-    print(f" {'Firmware Version':<18} | {'Count':<8} | {'Share (%)':<10} | {'Online':<8} | {'Offline':<8} | {'Online Rate'}")
-    print(" "+ "-"*80)
+    print(f" {'Firmware Version':<18} | {'Count':<8} | {'Share (%)':<10} | {'Online':<8} | {'Offline':<8} | {'PF':<6} | {'Online Rate'}")
+    print(" "+ "-"*85)
     for row in analysis["summary_rows"]:
-        print(f" {row['version']:<18} | {row['count']:<8} | {row['percentage']:>6.2f}%    | {row['online']:<8} | {row['offline']:<8} | {row['online_pct']:>5.1f}%")
+        print(f" {row['version']:<18} | {row['count']:<8} | {row['percentage']:>6.2f}%    | {row['online']:<8} | {row['offline']:<8} | {row.get('offline_pf', 0):<6} | {row['online_pct']:>5.1f}%")
 
     print("\n[+] REGION & ZONE DISTRIBUTION:")
     for reg_name, reg_data in sorted(analysis["regions"].items()):

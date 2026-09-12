@@ -33,7 +33,8 @@ class ReportGenerator:
                     "v47": zv47,
                     "other": z_data["other_count"],
                     "online": z_data["online"],
-                    "offline": z_data["offline"]
+                    "offline": z_data["offline"],
+                    "offline_pf": z_data["offline_pf"]
                 })
 
             region_list.append({
@@ -45,8 +46,16 @@ class ReportGenerator:
                 "other": reg_data["other_count"],
                 "online": reg_data["online"],
                 "offline": reg_data["offline"],
+                "offline_pf": reg_data["offline_pf"],
                 "zones": zone_list
             })
+
+        # Lookup dictionary for fast access in KPI cards & progress bar
+        v_map = {row["version"]: row for row in self.data["summary_rows"]}
+        v55 = v_map.get("SL530.55", {"count": 0, "percentage": 0, "online": 0, "offline": 0, "offline_pf": 0, "online_pct": 0})
+        v54 = v_map.get("SL530.54", {"count": 0, "percentage": 0, "online": 0, "offline": 0, "offline_pf": 0, "online_pct": 0})
+        v47 = v_map.get("SL530.47", {"count": 0, "percentage": 0, "online": 0, "offline": 0, "offline_pf": 0, "online_pct": 0})
+        v_other = v_map.get("Other Versions", {"count": 0, "percentage": 0, "online": 0, "offline": 0, "offline_pf": 0, "online_pct": 0})
 
         # Ultra-clean, robust, email-client compliant HTML layout (no hidden/clipped text)
         html_template = """<!DOCTYPE html>
@@ -100,27 +109,27 @@ class ReportGenerator:
           <td width="25%" style="background-color: #fffbeb; border: 1px solid #fde68a; border-top: 4px solid #f59e0b; border-radius: 8px; padding: 12px 10px; text-align: center; vertical-align: top;">
             <div style="font-size: 10px; font-weight: 800; color: #b45309; text-transform: uppercase; letter-spacing: 0.5px; line-height: 14px;">Latest Version</div>
             <div style="font-size: 13px; font-weight: 800; color: #92400e; margin-top: 2px;">SL530.55</div>
-            <div style="font-size: 26px; font-weight: 900; color: #92400e; margin: 4px 0 2px 0; line-height: 1.1;">119</div>
-            <div style="font-size: 11px; font-weight: 700; color: #b45309;">2.26% Share</div>
-            <div style="font-size: 10px; font-weight: 600; color: #64748b; margin-top: 2px;"><span style="color: #15803d;">115 On</span> &bull; <span style="color: #b91c1c;">4 Off</span></div>
+            <div style="font-size: 26px; font-weight: 900; color: #92400e; margin: 4px 0 2px 0; line-height: 1.1;">{{ "{:,}".format(v55.count) }}</div>
+            <div style="font-size: 11px; font-weight: 700; color: #b45309;">{{ "%.2f"|format(v55.percentage) }}% Share</div>
+            <div style="font-size: 10px; font-weight: 600; color: #64748b; margin-top: 2px;"><span style="color: #15803d;">{{ "{:,}".format(v55.online) }} On</span> &bull; <span style="color: #b91c1c;">{{ "{:,}".format(v55.offline) }} Off</span>{% if v55.offline_pf > 0 %} &bull; <span style="color: #b45309;">{{ v55.offline_pf }} PF</span>{% endif %}</div>
           </td>
 
           <!-- Card 2: .54 -->
           <td width="25%" style="background-color: #f0fdf4; border: 1px solid #bbf7d0; border-top: 4px solid #10b981; border-radius: 8px; padding: 12px 10px; text-align: center; vertical-align: top;">
             <div style="font-size: 10px; font-weight: 800; color: transparent; line-height: 14px;">&nbsp;</div>
             <div style="font-size: 13px; font-weight: 800; color: #065f46; margin-top: 2px;">SL530.54</div>
-            <div style="font-size: 26px; font-weight: 900; color: #065f46; margin: 4px 0 2px 0; line-height: 1.1;">5,110</div>
-            <div style="font-size: 11px; font-weight: 700; color: #047857;">96.98% Share</div>
-            <div style="font-size: 10px; font-weight: 600; color: #64748b; margin-top: 2px;"><span style="color: #15803d;">4,890 On</span> &bull; <span style="color: #b91c1c;">220 Off</span></div>
+            <div style="font-size: 26px; font-weight: 900; color: #065f46; margin: 4px 0 2px 0; line-height: 1.1;">{{ "{:,}".format(v54.count) }}</div>
+            <div style="font-size: 11px; font-weight: 700; color: #047857;">{{ "%.2f"|format(v54.percentage) }}% Share</div>
+            <div style="font-size: 10px; font-weight: 600; color: #64748b; margin-top: 2px;"><span style="color: #15803d;">{{ "{:,}".format(v54.online) }} On</span> &bull; <span style="color: #b91c1c;">{{ "{:,}".format(v54.offline) }} Off</span>{% if v54.offline_pf > 0 %} &bull; <span style="color: #b45309;">{{ v54.offline_pf }} PF</span>{% endif %}</div>
           </td>
 
           <!-- Card 3: .47 -->
           <td width="25%" style="background-color: #fef2f2; border: 1px solid #fecaca; border-top: 4px solid #ef4444; border-radius: 8px; padding: 12px 10px; text-align: center; vertical-align: top;">
             <div style="font-size: 10px; font-weight: 800; color: transparent; line-height: 14px;">&nbsp;</div>
             <div style="font-size: 13px; font-weight: 800; color: #991b1b; margin-top: 2px;">SL530.47</div>
-            <div style="font-size: 26px; font-weight: 900; color: #991b1b; margin: 4px 0 2px 0; line-height: 1.1;">37</div>
-            <div style="font-size: 11px; font-weight: 700; color: #b91c1c;">0.70% Share</div>
-            <div style="font-size: 10px; font-weight: 600; color: #64748b; margin-top: 2px;"><span style="color: #15803d;">25 On</span> &bull; <span style="color: #b91c1c;">12 Off</span></div>
+            <div style="font-size: 26px; font-weight: 900; color: #991b1b; margin: 4px 0 2px 0; line-height: 1.1;">{{ "{:,}".format(v47.count) }}</div>
+            <div style="font-size: 11px; font-weight: 700; color: #b91c1c;">{{ "%.2f"|format(v47.percentage) }}% Share</div>
+            <div style="font-size: 10px; font-weight: 600; color: #64748b; margin-top: 2px;"><span style="color: #15803d;">{{ "{:,}".format(v47.online) }} On</span> &bull; <span style="color: #b91c1c;">{{ "{:,}".format(v47.offline) }} Off</span>{% if v47.offline_pf > 0 %} &bull; <span style="color: #b45309;">{{ v47.offline_pf }} PF</span>{% endif %}</div>
           </td>
 
           <!-- Card 4: Total Panels -->
@@ -129,7 +138,7 @@ class ReportGenerator:
             <div style="font-size: 13px; font-weight: 800; color: #0f172a; margin-top: 2px;">Total Panels</div>
             <div style="font-size: 26px; font-weight: 900; color: #0f172a; margin: 4px 0 2px 0; line-height: 1.1;">{{ "{:,}".format(data.total_panels) }}</div>
             <div style="font-size: 11px; font-weight: 700; color: #334155;">{{ "%.1f"|format(data.online_pct) }}% Online</div>
-            <div style="font-size: 10px; font-weight: 600; color: #64748b; margin-top: 2px;"><span style="color: #15803d;">{{ "{:,}".format(data.online_total) }} On</span> &bull; <span style="color: #b91c1c;">{{ "{:,}".format(data.offline_total) }} Off</span></div>
+            <div style="font-size: 10px; font-weight: 600; color: #64748b; margin-top: 2px;"><span style="color: #15803d;">{{ "{:,}".format(data.online_total) }} On</span> &bull; <span style="color: #b91c1c;">{{ "{:,}".format(data.offline_total) }} Off</span>{% if data.offline_pf_total > 0 %} &bull; <span style="color: #b45309;">{{ "{:,}".format(data.offline_pf_total) }} PF</span>{% endif %}</div>
           </td>
         </tr>
       </table>
@@ -140,22 +149,27 @@ class ReportGenerator:
           <td>
             <div style="font-size: 12px; font-weight: 700; color: #475569; margin-bottom: 8px; display: flex; justify-content: space-between;">
               <span>Fleet Firmware Share</span>
-              <span>5,269 Panels</span>
+              <span>{{ "{:,}".format(data.total_panels) }} Panels</span>
             </div>
             <!-- Multi segment bar -->
             <table width="100%" height="12" border="0" cellpadding="0" cellspacing="0" style="background-color: #e2e8f0; border-radius: 6px; overflow: hidden;">
               <tr>
-                <td width="2.26%" style="background-color: #f59e0b;" title="SL530.55 (2.26%)"></td>
-                <td width="96.98%" style="background-color: #10b981;" title="SL530.54 (96.98%)"></td>
-                <td width="0.70%" style="background-color: #ef4444;" title="SL530.47 (0.70%)"></td>
-                <td width="0.06%" style="background-color: #94a3b8;" title="Others (0.06%)"></td>
+                <td width="{{ '%.2f'|format(v55.percentage) }}%" style="background-color: #f59e0b;" title="SL530.55 ({{ '%.2f'|format(v55.percentage) }}%)"></td>
+                <td width="{{ '%.2f'|format(v54.percentage) }}%" style="background-color: #10b981;" title="SL530.54 ({{ '%.2f'|format(v54.percentage) }}%)"></td>
+                <td width="{{ '%.2f'|format(v47.percentage) }}%" style="background-color: #ef4444;" title="SL530.47 ({{ '%.2f'|format(v47.percentage) }}%)"></td>
+                {% if v_other.count > 0 %}
+                <td width="{{ '%.2f'|format(v_other.percentage) }}%" style="background-color: #94a3b8;" title="Others ({{ '%.2f'|format(v_other.percentage) }}%)"></td>
+                {% endif %}
               </tr>
             </table>
             <!-- Legend -->
             <div style="margin-top: 8px; font-size: 11px; font-weight: 600; color: #475569;">
-              <span style="color: #b45309;">&#9632; SL530.55: 119 (2.26%)</span> &nbsp;&bull;&nbsp;
-              <span style="color: #047857;">&#9632; SL530.54: 5,110 (96.98%)</span> &nbsp;&bull;&nbsp;
-              <span style="color: #b91c1c;">&#9632; SL530.47: 37 (0.70%)</span>
+              <span style="color: #b45309;">&#9632; SL530.55: {{ "{:,}".format(v55.count) }} ({{ "%.2f"|format(v55.percentage) }}%)</span> &nbsp;&bull;&nbsp;
+              <span style="color: #047857;">&#9632; SL530.54: {{ "{:,}".format(v54.count) }} ({{ "%.2f"|format(v54.percentage) }}%)</span> &nbsp;&bull;&nbsp;
+              <span style="color: #b91c1c;">&#9632; SL530.47: {{ "{:,}".format(v47.count) }} ({{ "%.2f"|format(v47.percentage) }}%)</span>
+              {% if v_other.count > 0 %}
+              &nbsp;&bull;&nbsp; <span style="color: #64748b;">&#9632; Others: {{ "{:,}".format(v_other.count) }} ({{ "%.2f"|format(v_other.percentage) }}%)</span>
+              {% endif %}
             </div>
           </td>
         </tr>
@@ -171,8 +185,9 @@ class ReportGenerator:
             <th style="padding: 10px 14px; text-align: left; font-size: 12px; font-weight: 700;">Firmware Version</th>
             <th style="padding: 10px 14px; text-align: right; font-size: 12px; font-weight: 700;">Total Panels</th>
             <th style="padding: 10px 14px; text-align: right; font-size: 12px; font-weight: 700;">Share (%)</th>
-            <th style="padding: 10px 14px; text-align: center; font-size: 12px; font-weight: 700;">Online (Last 4h)</th>
-            <th style="padding: 10px 14px; text-align: center; font-size: 12px; font-weight: 700;">Offline</th>
+            <th style="padding: 10px 14px; text-align: center; font-size: 12px; font-weight: 700; color: #86efac;">ONLINE</th>
+            <th style="padding: 10px 14px; text-align: center; font-size: 12px; font-weight: 700; color: #fca5a5;">OFFLINE (Real)</th>
+            <th style="padding: 10px 14px; text-align: center; font-size: 12px; font-weight: 700; color: #fde68a;">OFFLINE (PF)</th>
             <th style="padding: 10px 14px; text-align: center; font-size: 12px; font-weight: 700;">Online Rate</th>
           </tr>
         </thead>
@@ -194,6 +209,7 @@ class ReportGenerator:
             <td style="padding: 10px 14px; text-align: right; font-weight: 600; color: #334155;">{{ "%.2f"|format(row.percentage) }}%</td>
             <td style="padding: 10px 14px; text-align: center; color: #15803d; font-weight: 700;">{{ "{:,}".format(row.online) }}</td>
             <td style="padding: 10px 14px; text-align: center; color: #b91c1c; font-weight: 700;">{{ "{:,}".format(row.offline) }}</td>
+            <td style="padding: 10px 14px; text-align: center; color: #b45309; font-weight: 700;">{{ "{:,}".format(row.offline_pf) }}</td>
             <td style="padding: 10px 14px; text-align: center; font-weight: 700; color: #0f172a;">{{ "%.1f"|format(row.online_pct) }}%</td>
           </tr>
           {% endfor %}
@@ -204,6 +220,7 @@ class ReportGenerator:
             <td style="padding: 10px 14px; text-align: right; color: #0f172a;">100.00%</td>
             <td style="padding: 10px 14px; text-align: center; color: #15803d;">{{ "{:,}".format(data.online_total) }}</td>
             <td style="padding: 10px 14px; text-align: center; color: #b91c1c;">{{ "{:,}".format(data.offline_total) }}</td>
+            <td style="padding: 10px 14px; text-align: center; color: #b45309;">{{ "{:,}".format(data.offline_pf_total) }}</td>
             <td style="padding: 10px 14px; text-align: center; color: #0f172a;">{{ "%.1f"|format(data.online_pct) }}%</td>
           </tr>
         </tbody>
@@ -234,7 +251,7 @@ class ReportGenerator:
             <td style="padding: 10px 14px; text-align: right; color: #047857; font-weight: 800;">{{ "{:,}".format(reg.v54) }}</td>
             <td style="padding: 10px 14px; text-align: right; color: #b91c1c; font-weight: 800;">{{ "{:,}".format(reg.v47) }}</td>
             <td style="padding: 10px 14px; text-align: center; font-size: 11px;">
-              <span style="color: #15803d; font-weight: 700;">{{ reg.online }} On</span> &bull; <span style="color: #b91c1c; font-weight: 700;">{{ reg.offline }} Off</span>
+              <span style="color: #15803d; font-weight: 700;">{{ reg.online }} On</span> &bull; <span style="color: #b91c1c; font-weight: 700;">{{ reg.offline }} Off</span>{% if reg.offline_pf > 0 %} &bull; <span style="color: #b45309; font-weight: 700;">{{ reg.offline_pf }} PF</span>{% endif %}
             </td>
           </tr>
           <!-- Zone Rows -->
@@ -246,7 +263,7 @@ class ReportGenerator:
             <td style="padding: 8px 14px; text-align: right; color: #047857; font-weight: 700;">{{ "{:,}".format(z.v54) }}</td>
             <td style="padding: 8px 14px; text-align: right; color: #b91c1c; font-weight: 700;">{{ "{:,}".format(z.v47) }}</td>
             <td style="padding: 8px 14px; text-align: center; font-size: 11px; color: #64748b;">
-              <span style="color: #15803d; font-weight: 600;">{{ z.online }}</span> / <span style="color: #b91c1c; font-weight: 600;">{{ z.offline }}</span>
+              <span style="color: #15803d; font-weight: 600;">{{ z.online }}</span> / <span style="color: #b91c1c; font-weight: 600;">{{ z.offline }}</span>{% if z.offline_pf > 0 %} / <span style="color: #b45309; font-weight: 600;">{{ z.offline_pf }} PF</span>{% endif %}
             </td>
           </tr>
           {% endfor %}
@@ -277,7 +294,11 @@ class ReportGenerator:
         template = Template(html_template)
         rendered_html = template.render(
             data=self.data,
-            region_list=region_list
+            region_list=region_list,
+            v55=v55,
+            v54=v54,
+            v47=v47,
+            v_other=v_other
         )
         
         with open(output_path, "w", encoding="utf-8") as f:
