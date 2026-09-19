@@ -3,6 +3,7 @@ import json
 import os
 import sys
 import logging
+from datetime import datetime
 from config import Config
 from tb_client import ThingsBoardClient
 from fw_analyzer import FirmwareAnalyzer
@@ -72,15 +73,22 @@ def run(args):
 
     print(f"[OK] HTML Dashboard generated: {os.path.abspath(html_path)}")
 
-    # Email Dispatch if requested (No attachments)
+    # Generate Ward Breakdown Excel Attachment
+    timestamp_str = datetime.now().strftime("%Y%m%d_%H%M%S")
+    excel_filename = f"Ward_FW_Breakdown_{timestamp_str}.xlsx"
+    excel_path = rep_gen.generate_ward_breakdown_excel(excel_filename)
+    print(f"[OK] Ward Breakdown Excel generated: {os.path.abspath(excel_path)}")
+
+    # Email Dispatch if requested
     if args.send_now:
         logger.info("Dispatching email dashboard to recipient...")
         sender = MailSender()
         success = sender.send_email(
-            html_content_path=html_path
+            html_content_path=html_path,
+            attachment_path=excel_path
         )
         if success:
-            print("\n[OK] Email successfully dispatched to recipient!")
+            print("\n[OK] Email successfully dispatched to recipient with Excel attachment!")
         else:
             print("\n[FAIL] Email dispatch failed. Please check logs.")
 

@@ -6,6 +6,8 @@ import logging
 from pathlib import Path
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
+from email.mime.base import MIMEBase
+from email import encoders
 from datetime import datetime, timezone, timedelta
 from config import Config
 
@@ -66,7 +68,7 @@ class MailSender:
         except Exception as e:
             logger.warning(f"Could not save thread state: {e}")
 
-    def send_email(self, html_content_path, subject=None):
+    def send_email(self, html_content_path, attachment_path=None, subject=None):
         if not self.recipients:
             logger.error("No recipient emails configured.")
             return False
@@ -107,6 +109,22 @@ class MailSender:
         # Attach text & HTML versions
         msg.attach(MIMEText("Please view this email in an HTML-compatible email client.", "plain"))
         msg.attach(MIMEText(html_body, "html"))
+
+        if attachment_path and os.path.exists(attachment_path):
+            try:
+                with open(attachment_path, "rb") as attachment:
+                    part = MIMEBase("application", "octet-stream")
+                    part.set_payload(attachment.read())
+                encoders.encode_base64(part)
+                filename = os.path.basename(attachment_path)
+                part.add_header(
+                    "Content-Disposition",
+                    f"attachment; filename= {filename}",
+                )
+                msg.attach(part)
+                logger.info(f"Attached file: {filename}")
+            except Exception as e:
+                logger.error(f"Failed to attach {attachment_path}: {e}")
 
         all_destinations = list(set(self.recipients + self.bcc))
 

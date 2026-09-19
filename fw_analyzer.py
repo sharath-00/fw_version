@@ -8,6 +8,18 @@ IST = timezone(timedelta(hours=5, minutes=30))
 # Order: .55 first, then .54, then .47 as requested
 FOCUSED_VERSIONS = ["SL530.55", "SL530.54", "SL530.47"]
 
+import os
+
+PARK_SLOTS_UIDS = set()
+csv_file_path = os.path.join(os.path.dirname(__file__), 'Park_Lights_FW_Version - BBMP.csv')
+if os.path.exists(csv_file_path):
+    with open(csv_file_path, 'r', encoding='utf-8') as f:
+        for line in f:
+            uid = line.strip().replace(',', '')
+            if uid:
+                PARK_SLOTS_UIDS.add(uid)
+
+
 class FirmwareAnalyzer:
     def __init__(self, panels_data):
         self.panels = panels_data
@@ -29,6 +41,12 @@ class FirmwareAnalyzer:
         online_total = 0
         offline_total = 0
         offline_pf_total = 0
+
+        park_slots_total = len(PARK_SLOTS_UIDS)
+        park_slots_completed = 0
+        park_slots_online = 0
+        park_slots_offline = 0
+        park_slots_offline_pf = 0
 
         # Region & Zone Breakdown
         regions = defaultdict(lambda: {
@@ -54,6 +72,17 @@ class FirmwareAnalyzer:
             is_pf = p.get("is_offline_pf", False)
             reg = p.get("region") or "Unknown"
             zone = p.get("zone") or "Unknown"
+            panel_label = p.get("panel_label", "")
+
+            if panel_label in PARK_SLOTS_UIDS:
+                if raw_fw == "SL530.59":
+                    park_slots_completed += 1
+                if is_pf:
+                    park_slots_offline_pf += 1
+                elif is_on:
+                    park_slots_online += 1
+                else:
+                    park_slots_offline += 1
 
             if is_pf:
                 offline_pf_total += 1
@@ -162,6 +191,14 @@ class FirmwareAnalyzer:
             "offline_total": offline_total,
             "offline_pf_total": offline_pf_total,
             "online_pct": (online_total / total_panels * 100) if total_panels else 0,
+            "park_slots": {
+                "total": park_slots_total,
+                "completed": park_slots_completed,
+                "online": park_slots_online,
+                "offline": park_slots_offline,
+                "offline_pf": park_slots_offline_pf,
+                "percentage": (park_slots_completed / park_slots_total * 100) if park_slots_total else 0
+            },
             "focused_versions": self.focused_versions,
             "summary_rows": summary_rows,
             "regions": regions,

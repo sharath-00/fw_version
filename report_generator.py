@@ -3,6 +3,8 @@ import json
 import logging
 from datetime import datetime, timezone, timedelta
 from jinja2 import Template
+from collections import defaultdict
+import openpyxl
 
 logger = logging.getLogger("BBMP_FW_Report.ReportGenerator")
 
@@ -106,7 +108,7 @@ class ReportGenerator:
       <table width="100%" border="0" cellpadding="0" cellspacing="10" style="margin-bottom: 24px;">
         <tr>
           <!-- Card 1: .55 (Latest Version) -->
-          <td width="25%" style="background-color: #fffbeb; border: 1px solid #fde68a; border-top: 4px solid #f59e0b; border-radius: 8px; padding: 12px 10px; text-align: center; vertical-align: top;">
+          <td width="20%" style="background-color: #fffbeb; border: 1px solid #fde68a; border-top: 4px solid #f59e0b; border-radius: 8px; padding: 12px 10px; text-align: center; vertical-align: top;">
             <div style="font-size: 10px; font-weight: 800; color: #b45309; text-transform: uppercase; letter-spacing: 0.5px; line-height: 14px;">Latest Version</div>
             <div style="font-size: 13px; font-weight: 800; color: #92400e; margin-top: 2px;">SL530.55</div>
             <div style="font-size: 26px; font-weight: 900; color: #92400e; margin: 4px 0 2px 0; line-height: 1.1;">{{ "{:,}".format(v55.count) }}</div>
@@ -115,7 +117,7 @@ class ReportGenerator:
           </td>
 
           <!-- Card 2: .54 -->
-          <td width="25%" style="background-color: #f0fdf4; border: 1px solid #bbf7d0; border-top: 4px solid #10b981; border-radius: 8px; padding: 12px 10px; text-align: center; vertical-align: top;">
+          <td width="20%" style="background-color: #f0fdf4; border: 1px solid #bbf7d0; border-top: 4px solid #10b981; border-radius: 8px; padding: 12px 10px; text-align: center; vertical-align: top;">
             <div style="font-size: 10px; font-weight: 800; color: transparent; line-height: 14px;">&nbsp;</div>
             <div style="font-size: 13px; font-weight: 800; color: #065f46; margin-top: 2px;">SL530.54</div>
             <div style="font-size: 26px; font-weight: 900; color: #065f46; margin: 4px 0 2px 0; line-height: 1.1;">{{ "{:,}".format(v54.count) }}</div>
@@ -124,7 +126,7 @@ class ReportGenerator:
           </td>
 
           <!-- Card 3: .47 -->
-          <td width="25%" style="background-color: #fef2f2; border: 1px solid #fecaca; border-top: 4px solid #ef4444; border-radius: 8px; padding: 12px 10px; text-align: center; vertical-align: top;">
+          <td width="20%" style="background-color: #fef2f2; border: 1px solid #fecaca; border-top: 4px solid #ef4444; border-radius: 8px; padding: 12px 10px; text-align: center; vertical-align: top;">
             <div style="font-size: 10px; font-weight: 800; color: transparent; line-height: 14px;">&nbsp;</div>
             <div style="font-size: 13px; font-weight: 800; color: #991b1b; margin-top: 2px;">SL530.47</div>
             <div style="font-size: 26px; font-weight: 900; color: #991b1b; margin: 4px 0 2px 0; line-height: 1.1;">{{ "{:,}".format(v47.count) }}</div>
@@ -132,8 +134,17 @@ class ReportGenerator:
             <div style="font-size: 10px; font-weight: 600; color: #64748b; margin-top: 2px;"><span style="color: #15803d;">{{ "{:,}".format(v47.online) }} On</span> &bull; <span style="color: #b91c1c;">{{ "{:,}".format(v47.offline) }} Off</span>{% if v47.offline_pf > 0 %} &bull; <span style="color: #b45309;">{{ v47.offline_pf }} PF</span>{% endif %}</div>
           </td>
 
-          <!-- Card 4: Total Panels -->
-          <td width="25%" style="background-color: #f8fafc; border: 1px solid #e2e8f0; border-top: 4px solid #0f172a; border-radius: 8px; padding: 12px 10px; text-align: center; vertical-align: top;">
+          <!-- Card 4: Park Slots -->
+          <td width="20%" style="background-color: #f3e8ff; border: 1px solid #e9d5ff; border-top: 4px solid #a855f7; border-radius: 8px; padding: 12px 10px; text-align: center; vertical-align: top;">
+            <div style="font-size: 10px; font-weight: 800; color: #6b21a8; text-transform: uppercase; letter-spacing: 0.5px; line-height: 14px;">Park Slots</div>
+            <div style="font-size: 13px; font-weight: 800; color: #581c87; margin-top: 2px;">SL530.59</div>
+            <div style="font-size: 26px; font-weight: 900; color: #581c87; margin: 4px 0 2px 0; line-height: 1.1;">{{ "{:,}".format(data.park_slots.completed) }}<span style="font-size: 14px; color: #7e22ce;">/{{ data.park_slots.total }}</span></div>
+            <div style="font-size: 11px; font-weight: 700; color: #7e22ce;">{{ "%.1f"|format(data.park_slots.percentage) }}% Completed</div>
+            <div style="font-size: 10px; font-weight: 600; color: #64748b; margin-top: 2px;"><span style="color: #15803d;">{{ "{:,}".format(data.park_slots.online) }} On</span> &bull; <span style="color: #b91c1c;">{{ "{:,}".format(data.park_slots.offline) }} Off</span>{% if data.park_slots.offline_pf > 0 %} &bull; <span style="color: #b45309;">{{ data.park_slots.offline_pf }} PF</span>{% endif %}</div>
+          </td>
+
+          <!-- Card 5: Total Panels -->
+          <td width="20%" style="background-color: #f8fafc; border: 1px solid #e2e8f0; border-top: 4px solid #0f172a; border-radius: 8px; padding: 12px 10px; text-align: center; vertical-align: top;">
             <div style="font-size: 10px; font-weight: 800; color: transparent; line-height: 14px;">&nbsp;</div>
             <div style="font-size: 13px; font-weight: 800; color: #0f172a; margin-top: 2px;">Total Panels</div>
             <div style="font-size: 26px; font-weight: 900; color: #0f172a; margin: 4px 0 2px 0; line-height: 1.1;">{{ "{:,}".format(data.total_panels) }}</div>
@@ -306,3 +317,58 @@ class ReportGenerator:
             
         logger.info(f"Email-safe HTML dashboard generated successfully at {output_path}")
         return output_path
+
+    def generate_ward_breakdown_excel(self, output_path="Ward_FW_Breakdown.xlsx"):
+        logger.info(f"Generating ward breakdown excel at {output_path}...")
+        
+        # Group by Zone -> Ward
+        # Target structure: ward_data[zone][ward] = {"total": 0, "SL530.55": 0, "SL530.54": 0, "SL530.47": 0, "Others": 0}
+        ward_data = defaultdict(lambda: defaultdict(lambda: {"total": 0, "SL530.55": 0, "SL530.54": 0, "SL530.47": 0, "Others": 0}))
+        
+        for p in self.panels:
+            z = p.get("zone", "Unknown")
+            w = p.get("ward", "Unknown")
+            fw = p.get("fw_version", "Unknown")
+            
+            ward_data[z][w]["total"] += 1
+            if fw in ["SL530.55", "SL530.54", "SL530.47"]:
+                ward_data[z][w][fw] += 1
+            else:
+                ward_data[z][w]["Others"] += 1
+
+        wb = openpyxl.Workbook()
+        ws = wb.active
+        ws.title = "Ward Breakdown"
+        
+        headers = ["Zone", "Ward", "Total Panels", "SL530.55", "SL530.54", "SL530.47", "Others"]
+        ws.append(headers)
+        
+        # Header formatting
+        for cell in ws[1]:
+            cell.font = openpyxl.styles.Font(bold=True)
+            cell.fill = openpyxl.styles.PatternFill(start_color="D3D3D3", end_color="D3D3D3", fill_type="solid")
+            
+        # Write rows sorted by Zone, then Ward
+        for z in sorted(ward_data.keys()):
+            for w in sorted(ward_data[z].keys()):
+                d = ward_data[z][w]
+                row = [z, w, d["total"], d["SL530.55"], d["SL530.54"], d["SL530.47"], d["Others"]]
+                ws.append(row)
+                
+        # Auto-adjust column widths
+        for col in ws.columns:
+            max_length = 0
+            column = col[0].column_letter 
+            for cell in col:
+                try:
+                    if len(str(cell.value)) > max_length:
+                        max_length = len(cell.value)
+                except:
+                    pass
+            adjusted_width = (max_length + 2)
+            ws.column_dimensions[column].width = adjusted_width
+            
+        wb.save(output_path)
+        logger.info(f"Ward breakdown excel generated successfully at {output_path}")
+        return output_path
+
