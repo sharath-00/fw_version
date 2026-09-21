@@ -13,7 +13,7 @@ class ReportGenerator:
         self.data = analysis_result
         self.panels = panels_raw_data
 
-    def generate_html_dashboard(self, output_path="fw_dashboard_preview.html"):
+    def generate_html_dashboard(self, output_path="fw_dashboard_preview.html", include_regions=True):
         logger.info(f"Generating email-safe HTML dashboard at {output_path}...")
         
         region_list = []
@@ -237,6 +237,7 @@ class ReportGenerator:
         </tbody>
       </table>
 
+      {% if include_regions %}
       <!-- Section Title: Region & Zone Matrix -->
       <div style="font-size: 15px; font-weight: 800; color: #0f172a; margin: 24px 0 10px 0; border-left: 4px solid #0f766e; padding-left: 8px;">
         Region &amp; Zone Distribution
@@ -281,6 +282,7 @@ class ReportGenerator:
           {% endfor %}
         </tbody>
       </table>
+      {% endif %}
 
     </td>
   </tr>
@@ -309,7 +311,8 @@ class ReportGenerator:
             v55=v55,
             v54=v54,
             v47=v47,
-            v_other=v_other
+            v_other=v_other,
+            include_regions=include_regions
         )
         
         with open(output_path, "w", encoding="utf-8") as f:

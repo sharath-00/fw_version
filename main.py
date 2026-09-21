@@ -15,7 +15,7 @@ logger = logging.getLogger("BBMP_FW_Report.Main")
 DATA_CACHE_FILE = "latest_fw_data.json"
 HTML_DASHBOARD_FILE = "fw_dashboard_preview.html"
 
-def print_terminal_summary(analysis):
+def print_terminal_summary(analysis, no_regions=False):
     print("\n" + "="*80)
     print("      BBMP SMART STREET LIGHTS - FIRMWARE VERSION DASHBOARD")
     print("="*80)
@@ -32,17 +32,18 @@ def print_terminal_summary(analysis):
     for row in analysis["summary_rows"]:
         print(f" {row['version']:<18} | {row['count']:<8} | {row['percentage']:>6.2f}%    | {row['online']:<8} | {row['offline']:<8} | {row.get('offline_pf', 0):<6} | {row['online_pct']:>5.1f}%")
 
-    print("\n[+] REGION & ZONE DISTRIBUTION:")
-    for reg_name, reg_data in sorted(analysis["regions"].items()):
-        v55 = reg_data["versions"]["SL530.55"]
-        v54 = reg_data["versions"]["SL530.54"]
-        v47 = reg_data["versions"]["SL530.47"]
-        print(f" > Region: {reg_name} (Total: {reg_data['total']:,} | .55: {v55} | .54: {v54:,} | .47: {v47} | Online: {reg_data['online']:,})")
-        for z_name, z_data in sorted(reg_data["zones"].items()):
-            zv55 = z_data["versions"]["SL530.55"]
-            zv54 = z_data["versions"]["SL530.54"]
-            zv47 = z_data["versions"]["SL530.47"]
-            print(f"    - {z_name:<20}: {z_data['total']:>5} panels (.55: {zv55:>3} | .54: {zv54:>5} | .47: {zv47:>2} | Online: {z_data['online']:>5})")
+    if not no_regions:
+        print("\n[+] REGION & ZONE DISTRIBUTION:")
+        for reg_name, reg_data in sorted(analysis["regions"].items()):
+            v55 = reg_data["versions"]["SL530.55"]
+            v54 = reg_data["versions"]["SL530.54"]
+            v47 = reg_data["versions"]["SL530.47"]
+            print(f" > Region: {reg_name} (Total: {reg_data['total']:,} | .55: {v55} | .54: {v54:,} | .47: {v47} | Online: {reg_data['online']:,})")
+            for z_name, z_data in sorted(reg_data["zones"].items()):
+                zv55 = z_data["versions"]["SL530.55"]
+                zv54 = z_data["versions"]["SL530.54"]
+                zv47 = z_data["versions"]["SL530.47"]
+                print(f"    - {z_name:<20}: {z_data['total']:>5} panels (.55: {zv55:>3} | .54: {zv54:>5} | .47: {zv47:>2} | Online: {z_data['online']:>5})")
 
     print("\n" + "="*80 + "\n")
 
@@ -65,11 +66,11 @@ def run(args):
     analyzer = FirmwareAnalyzer(panels_data)
     analysis = analyzer.analyze()
 
-    print_terminal_summary(analysis)
+    print_terminal_summary(analysis, args.no_regions)
 
     # Generate HTML Dashboard Only
     rep_gen = ReportGenerator(analysis, panels_data)
-    html_path = rep_gen.generate_html_dashboard(HTML_DASHBOARD_FILE)
+    html_path = rep_gen.generate_html_dashboard(HTML_DASHBOARD_FILE, include_regions=not args.no_regions)
 
     print(f"[OK] HTML Dashboard generated: {os.path.abspath(html_path)}")
 
@@ -98,6 +99,7 @@ if __name__ == "__main__":
     parser.add_argument("--cached", action="store_true", help="Use locally cached data without fetching from ThingsBoard")
     parser.add_argument("--sample", type=int, default=None, help="Limit fetch to N sample panels for testing")
     parser.add_argument("--workers", type=int, default=35, help="Number of parallel worker threads (default: 35)")
+    parser.add_argument("--no-regions", action="store_true", help="Exclude region and zone distribution from the dashboard")
 
     args = parser.parse_args()
     run(args)
