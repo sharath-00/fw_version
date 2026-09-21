@@ -40,7 +40,7 @@ jobs:
           SMTP_USERNAME: ${{ secrets.SMTP_USERNAME }}
           SMTP_PASSWORD: ${{ secrets.SMTP_PASSWORD }}
           SENDER_EMAIL: ${{ secrets.SENDER_EMAIL }}
-          RECIPIENT_EMAILS: ${{ secrets.RECIPIENT_EMAILS || '71762332038@cit.edu.in' }}
+          RECIPIENT_EMAILS: ${{ secrets.LITE_RECIPIENT_EMAILS || '71762332038@cit.edu.in' }}
           BCC_EMAILS: ${{ secrets.BCC_EMAILS || '' }}
           EMAIL_SUBJECT_PREFIX: ${{ secrets.EMAIL_SUBJECT_PREFIX || '[BBMP Panels - Firmware Version Status Report]' }}
           ENABLE_EMAIL_THREADING: ${{ secrets.ENABLE_EMAIL_THREADING || 'true' }}
