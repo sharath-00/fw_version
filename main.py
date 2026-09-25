@@ -75,8 +75,7 @@ def run(args):
     print(f"[OK] HTML Dashboard generated: {os.path.abspath(html_path)}")
 
     # Generate Ward Breakdown Excel Attachment
-    timestamp_str = datetime.now().strftime("%Y%m%d_%H%M%S")
-    excel_filename = f"Ward_FW_Breakdown_{timestamp_str}.xlsx"
+    excel_filename = "Ward_FW_Breakdown.xlsx"
     excel_path = rep_gen.generate_ward_breakdown_excel(excel_filename)
     print(f"[OK] Ward Breakdown Excel generated: {os.path.abspath(excel_path)}")
 
@@ -84,6 +83,9 @@ def run(args):
     if args.send_now:
         logger.info("Dispatching email dashboard to recipient...")
         sender = MailSender()
+        if args.to:
+            sender.recipients = [e.strip() for e in args.to.split(",") if e.strip()]
+            
         success = sender.send_email(
             html_content_path=html_path,
             attachment_path=excel_path
@@ -96,6 +98,7 @@ def run(args):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="BBMP Panels Firmware Version Fetcher & Mail Dashboard")
     parser.add_argument("--send-now", action="store_true", help="Send email dashboard immediately")
+    parser.add_argument("--to", type=str, default=None, help="Comma-separated list of recipient emails (overrides .env)")
     parser.add_argument("--cached", action="store_true", help="Use locally cached data without fetching from ThingsBoard")
     parser.add_argument("--sample", type=int, default=None, help="Limit fetch to N sample panels for testing")
     parser.add_argument("--workers", type=int, default=35, help="Number of parallel worker threads (default: 35)")
