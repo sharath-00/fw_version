@@ -5,26 +5,28 @@ from datetime import datetime, timezone, timedelta
 logger = logging.getLogger("BBMP_FW_Report.Analyzer")
 IST = timezone(timedelta(hours=5, minutes=30))
 
-# Order: .55 first, then .54, then .47 as requested
-FOCUSED_VERSIONS = ["SL530.55", "SL530.54", "SL530.47"]
+# Order: .59 first, then .55, then .54, then .47 as requested
+FOCUSED_VERSIONS = ["SL530.59", "SL530.55", "SL530.54", "SL530.47"]
 
 import os
 import requests
 import csv
 from io import StringIO
+from config import Config
 
 PARK_SLOTS_UIDS = set()
-csv_url = "https://docs.google.com/spreadsheets/d/e/2PACX-1vT1Uk0Rh0nVQkvd8wBhFWZnjaU1WgiwQmSTU_WRuofKg3nV0LpdCbZxarQOL-EGgpUqLESKZpbSHOF_/pub?gid=1603203461&single=true&output=csv"
+csv_urls = Config.PARK_LIGHTS_SHEET_URLS
 
 try:
-    response = requests.get(csv_url, timeout=10)
-    response.raise_for_status()
-    f = StringIO(response.text)
-    reader = csv.reader(f)
-    next(reader, None)  # Skip header
-    for row in reader:
-        if row and row[0].strip():
-            PARK_SLOTS_UIDS.add(row[0].strip())
+    for url in csv_urls:
+        response = requests.get(url, timeout=10)
+        response.raise_for_status()
+        f = StringIO(response.text)
+        reader = csv.reader(f)
+        next(reader, None)  # Skip header
+        for row in reader:
+            if len(row) > 2 and row[2].strip():
+                PARK_SLOTS_UIDS.add(row[2].strip())
     logger.info(f"Loaded {len(PARK_SLOTS_UIDS)} park lights UIDs from Google Sheets.")
 except Exception as e:
     logger.warning(f"Failed to fetch live park lights data: {e}. Falling back to local file.")

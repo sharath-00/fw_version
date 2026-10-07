@@ -45,5 +45,6 @@ jobs:
           EMAIL_SUBJECT_PREFIX: ${{ secrets.EMAIL_SUBJECT_PREFIX || '[BBMP Panels - Firmware Version Status Report]' }}
           ENABLE_EMAIL_THREADING: ${{ secrets.ENABLE_EMAIL_THREADING || 'true' }}
           EMAIL_THREAD_ID: ${{ secrets.EMAIL_THREAD_ID || 'bbmp-panels-firmware-version-report-thread@schnellenergy.com' }}
+          PARK_LIGHTS_SHEET_URLS: ${{ secrets.PARK_LIGHTS_SHEET_URLS }}
         run: |
           python main.py --send-now

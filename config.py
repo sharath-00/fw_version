@@ -25,6 +25,8 @@ class Config:
     TB_PASSWORD = os.getenv("THINGSBOARD_PASSWORD", "").strip()
     BBMP_CUSTOMER_ID = os.getenv("BBMP_CUSTOMER_ID", "").strip()
     TARGET_FW_VERSION = os.getenv("TARGET_FW_VERSION", "SL530.55").strip()
+    _sheet_urls_str = os.getenv("PARK_LIGHTS_SHEET_URLS", "")
+    PARK_LIGHTS_SHEET_URLS = [u.strip() for u in _sheet_urls_str.split(",") if u.strip()]
 
     # SMTP Email Configuration (Loaded strictly from .env)
     SMTP_SERVER = os.getenv("SMTP_SERVER", "smtp.gmail.com").strip()
