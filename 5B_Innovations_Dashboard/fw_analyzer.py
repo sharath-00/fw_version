@@ -9,34 +9,14 @@ IST = timezone(timedelta(hours=5, minutes=30))
 FOCUSED_VERSIONS = ["SL530.55", "SL530.54", "SL530.47"]
 
 import os
-import requests
-import csv
-from io import StringIO
 from config import Config
 
-PARK_SLOTS_UIDS = set()
-csv_urls = Config.PARK_LIGHTS_SHEET_URLS
+PARK_SLOTS_UIDS = Config.PARK_LIGHTS_UIDS
 
-try:
-    for url in csv_urls:
-        response = requests.get(url, timeout=10)
-        response.raise_for_status()
-        f = StringIO(response.text)
-        reader = csv.reader(f)
-        next(reader, None)  # Skip header
-        for row in reader:
-            if len(row) > 2 and row[2].strip():
-                PARK_SLOTS_UIDS.add(row[2].strip())
-    logger.info(f"Loaded {len(PARK_SLOTS_UIDS)} park lights UIDs from Google Sheets.")
-except Exception as e:
-    logger.warning(f"Failed to fetch live park lights data: {e}. Falling back to local file.")
-    csv_file_path = os.path.join(os.path.dirname(__file__), 'Park_Lights_FW_Version - 5B_Innovations.csv')
-    if os.path.exists(csv_file_path):
-        with open(csv_file_path, 'r', encoding='utf-8') as f:
-            for line in f:
-                uid = line.strip().split(',')[0]
-                if uid:
-                    PARK_SLOTS_UIDS.add(uid)
+if PARK_SLOTS_UIDS:
+    logger.info(f"Loaded {len(PARK_SLOTS_UIDS)} park lights UIDs from .env configuration.")
+else:
+    logger.warning("No park lights UIDs found in .env configuration.")
 
 
 class FirmwareAnalyzer:

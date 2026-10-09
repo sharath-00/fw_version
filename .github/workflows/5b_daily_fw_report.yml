@@ -46,7 +46,7 @@ jobs:
           EMAIL_SUBJECT_PREFIX: ${{ secrets.5B_EMAIL_SUBJECT_PREFIX || '[5B Innovations Panels - Firmware Version Status Report]' }}
           ENABLE_EMAIL_THREADING: ${{ secrets.ENABLE_EMAIL_THREADING || 'true' }}
           EMAIL_THREAD_ID: ${{ secrets.5B_EMAIL_THREAD_ID || '5b-innovations-panels-firmware-version-report-thread@schnellenergy.com' }}
-          PARK_LIGHTS_SHEET_URLS: ${{ secrets.PARK_LIGHTS_SHEET_URLS }}
+          PARK_LIGHTS_UIDS: ${{ secrets.PARK_LIGHTS_UIDS }}
         working-directory: ./5B_Innovations_Dashboard
         run: |
           python main.py --send-now
