@@ -33,7 +33,7 @@ jobs:
           THINGSBOARD_HOST: ${{ secrets.THINGSBOARD_HOST || 'https://schnelliot.in/' }}
           THINGSBOARD_USERNAME: ${{ secrets.THINGSBOARD_USERNAME }}
           THINGSBOARD_PASSWORD: ${{ secrets.THINGSBOARD_PASSWORD }}
-          BBMP_CUSTOMER_ID: ${{ secrets.5B_CUSTOMER_ID || '3e268290-3989-11f1-9e5f-85a6074555d7' }}
+          BBMP_CUSTOMER_ID: ${{ secrets.FIVE_B_CUSTOMER_ID || '3e268290-3989-11f1-9e5f-85a6074555d7' }}
           TARGET_FW_VERSION: 'SL530.54'
           SMTP_SERVER: ${{ secrets.SMTP_SERVER || 'smtp.gmail.com' }}
           SMTP_PORT: ${{ secrets.SMTP_PORT || '587' }}
@@ -41,11 +41,11 @@ jobs:
           SMTP_USERNAME: ${{ secrets.SMTP_USERNAME }}
           SMTP_PASSWORD: ${{ secrets.SMTP_PASSWORD }}
           SENDER_EMAIL: ${{ secrets.SENDER_EMAIL }}
-          RECIPIENT_EMAILS: ${{ secrets.5B_RECIPIENT_EMAILS || secrets.RECIPIENT_EMAILS || '71762332038@cit.edu.in' }}
+          RECIPIENT_EMAILS: ${{ secrets.FIVE_B_RECIPIENT_EMAILS || secrets.RECIPIENT_EMAILS || '71762332038@cit.edu.in' }}
           BCC_EMAILS: ${{ secrets.BCC_EMAILS || '' }}
-          EMAIL_SUBJECT_PREFIX: ${{ secrets.5B_EMAIL_SUBJECT_PREFIX || '[5B Innovations Panels - Firmware Version Status Report]' }}
+          EMAIL_SUBJECT_PREFIX: ${{ secrets.FIVE_B_EMAIL_SUBJECT_PREFIX || '[5B Innovations Panels - Firmware Version Status Report]' }}
           ENABLE_EMAIL_THREADING: ${{ secrets.ENABLE_EMAIL_THREADING || 'true' }}
-          EMAIL_THREAD_ID: ${{ secrets.5B_EMAIL_THREAD_ID || '5b-innovations-panels-firmware-version-report-thread@schnellenergy.com' }}
+          EMAIL_THREAD_ID: ${{ secrets.FIVE_B_EMAIL_THREAD_ID || '5b-innovations-panels-firmware-version-report-thread@schnellenergy.com' }}
           PARK_LIGHTS_UIDS: ${{ secrets.PARK_LIGHTS_UIDS }}
         working-directory: ./5B_Innovations_Dashboard
         run: |
