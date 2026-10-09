@@ -41,7 +41,7 @@ jobs:
           SMTP_USERNAME: ${{ secrets.SMTP_USERNAME }}
           SMTP_PASSWORD: ${{ secrets.SMTP_PASSWORD }}
           SENDER_EMAIL: ${{ secrets.SENDER_EMAIL }}
-          RECIPIENT_EMAILS: ${{ secrets.RECIPIENT_EMAILS || '71762332038@cit.edu.in' }}
+          RECIPIENT_EMAILS: ${{ secrets.5B_RECIPIENT_EMAILS || secrets.RECIPIENT_EMAILS || '71762332038@cit.edu.in' }}
           BCC_EMAILS: ${{ secrets.BCC_EMAILS || '' }}
           EMAIL_SUBJECT_PREFIX: ${{ secrets.5B_EMAIL_SUBJECT_PREFIX || '[5B Innovations Panels - Firmware Version Status Report]' }}
           ENABLE_EMAIL_THREADING: ${{ secrets.ENABLE_EMAIL_THREADING || 'true' }}
