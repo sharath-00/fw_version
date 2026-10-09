@@ -1,0 +1,52 @@
+name: 5B Innovations Firmware Version Mail Report
+
+on:
+  # Allows triggering via GitHub REST API (repository_dispatch)
+  repository_dispatch:
+    types: [run_5b_daily_report, run_5b_fw_report]
+  # Allows optional manual run anytime from GitHub Actions tab
+  workflow_dispatch:
+
+jobs:
+  send-5b-firmware-report:
+    name: Generate & Send 5B Innovations Firmware Dashboard
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r 5B_Innovations_Dashboard/requirements.txt
+
+      - name: Execute Firmware Audit & Dispatch Email
+        env:
+          THINGSBOARD_HOST: ${{ secrets.THINGSBOARD_HOST || 'https://schnelliot.in/' }}
+          THINGSBOARD_USERNAME: ${{ secrets.THINGSBOARD_USERNAME }}
+          THINGSBOARD_PASSWORD: ${{ secrets.THINGSBOARD_PASSWORD }}
+          BBMP_CUSTOMER_ID: ${{ secrets.5B_CUSTOMER_ID || '3e268290-3989-11f1-9e5f-85a6074555d7' }}
+          TARGET_FW_VERSION: 'SL530.54'
+          SMTP_SERVER: ${{ secrets.SMTP_SERVER || 'smtp.gmail.com' }}
+          SMTP_PORT: ${{ secrets.SMTP_PORT || '587' }}
+          SMTP_USE_TLS: ${{ secrets.SMTP_USE_TLS || 'true' }}
+          SMTP_USERNAME: ${{ secrets.SMTP_USERNAME }}
+          SMTP_PASSWORD: ${{ secrets.SMTP_PASSWORD }}
+          SENDER_EMAIL: ${{ secrets.SENDER_EMAIL }}
+          RECIPIENT_EMAILS: ${{ secrets.RECIPIENT_EMAILS || '71762332038@cit.edu.in' }}
+          BCC_EMAILS: ${{ secrets.BCC_EMAILS || '' }}
+          EMAIL_SUBJECT_PREFIX: ${{ secrets.5B_EMAIL_SUBJECT_PREFIX || '[5B Innovations Panels - Firmware Version Status Report]' }}
+          ENABLE_EMAIL_THREADING: ${{ secrets.ENABLE_EMAIL_THREADING || 'true' }}
+          EMAIL_THREAD_ID: ${{ secrets.5B_EMAIL_THREAD_ID || '5b-innovations-panels-firmware-version-report-thread@schnellenergy.com' }}
+          PARK_LIGHTS_SHEET_URLS: ${{ secrets.PARK_LIGHTS_SHEET_URLS }}
+        working-directory: ./5B_Innovations_Dashboard
+        run: |
+          python main.py --send-now
